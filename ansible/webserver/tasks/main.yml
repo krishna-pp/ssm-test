@@ -1,0 +1,10 @@
+# tasks file for webserver
+- name: Install apache
+  yum: pkg=httpd state=latest
+- name: place index.html
+  copy: src=index.html dest=/var/www/html/index.html
+- name: start apache
+  service: name=httpd state=started
+- name: run apache on system boot
+  service: name=httpd enabled=yes
+  notify: restart apache
