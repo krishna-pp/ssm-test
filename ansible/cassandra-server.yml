@@ -1,0 +1,18 @@
+---
+  - name: Patch the server and Reboot
+    hosts: all 
+    tasks:
+      - name: Patch the server
+        become: yes
+        become_user: root
+        tags: Patch
+        shell: "yum -y update"
+        register: patchresult
+
+      - name: Reboot the server
+        tags: reboot
+        become: yes
+        become_user: root
+        shell: "sleep 5 && reboot"
+        async: 1
+        poll: 0
