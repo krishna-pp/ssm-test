@@ -2,25 +2,26 @@
   - name: Patch the server and Reboot
     hosts: all
     tasks:
+      - name: Get service facts
+        service_facts:
+        register: services_state
+
       - name: Check nodetool status
-        become: yes
-        become_user: root
         tags: Patch
         shell: "nodetool status | grep -c UN"
         register: nodetool_status
-
-      - debug: var=nodetool_status
+        when: services_state.ansible_facts.services["cassandra"].state == "running"
 
       - name: Patch the server
         become: yes
         become_user: root
         tags: Patch
         shell: "yum -y update"
-        when: nodetool_status.stdout == EXPECTED_STATUS
+        when: nodetool_status.stdout is defined and nodetool_status.stdout == EXPECTED_STATUS
 
       - name: Reboot the server
         tags: reboot
         become: yes
         become_user: root
-        shell: "sleep 5 && reboot"	
-        when: nodetool_status.stdout == EXPECTED_STATUS
+        shell: "sleep 5 && reboot"
+        when: nodetool_status.stdout is defined and nodetool_status.stdout == EXPECTED_STATUS
