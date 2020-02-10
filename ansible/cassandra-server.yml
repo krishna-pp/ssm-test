@@ -4,7 +4,7 @@
     tasks:
 
       - pause:
-          seconds: 120
+          seconds: 12
       
       - name: Get service facts
         service_facts:
@@ -27,5 +27,7 @@
         tags: reboot
         become: yes
         become_user: root
-        shell: "sleep 5 && reboot"
+        shell: "exit 194"
+        register: result
         when: nodetool_status.stdout is defined and nodetool_status.stdout == EXPECTED_STATUS
+        failed_when: result.rc == 0
