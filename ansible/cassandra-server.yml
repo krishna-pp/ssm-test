@@ -2,6 +2,10 @@
   - name: Patch the server and Reboot
     hosts: all
     tasks:
+
+      - pause:
+          seconds: 180
+
       - name: Get service facts
         service_facts:
         register: services_state
