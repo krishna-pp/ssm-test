@@ -23,9 +23,9 @@
         shell: "yum -y update"
         when: nodetool_status.stdout is defined and nodetool_status.stdout == EXPECTED_STATUS
 
-      - name: Reboot the server
+      - name: Instruct SSM Agent to reboot the instance
         tags: reboot
         become: yes
         become_user: root
-        shell: "sleep 5 && reboot"
+        shell: "exit 194"
         when: nodetool_status.stdout is defined and nodetool_status.stdout == EXPECTED_STATUS
