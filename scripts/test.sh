@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROD_PATCHING_WEEK=2
+PROD_PATCHING_WEEK=3
 TEST_PATCHING_WEEK=1
 SERVICE=org.apache.cassandra.service.CassandraDaemon
 CASSANDRA_NODETOOL_COMMAND='/usr/bin/nodetool'
