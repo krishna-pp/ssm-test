@@ -33,10 +33,14 @@ function check_service() {
 function patch_server(){
   echo "Patching server"
   yum -y update
- 
-  #exit with status 194 so SSM agent can reboot the server gracefully
-  exit 194
-
+  needs-restarting -r
+  if [ $? -eq 1 ]
+  then 
+    # Exit with status code 194 so SSM can reboot the instance gracefully
+    exit 194
+  else 
+    exit 0
+  fi
 }
 
 sleep $SLEEP_TIMEOUT
