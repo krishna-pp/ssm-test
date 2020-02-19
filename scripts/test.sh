@@ -1,10 +1,28 @@
 #!/bin/bash
 
-CASSANDRA_NODETOOL_COMMAND='/usr/bin/nodetool'
+PROD_PATCHING_WEEK=2
+TEST_PATCHING_WEEK=1
 SERVICE=org.apache.cassandra.service.CassandraDaemon
-SLEEP_TIMEOUT=120
+CASSANDRA_NODETOOL_COMMAND='/usr/bin/nodetool'
+
+function is_patching_week() {
+
+  local patch_type=$1
+  local patching_week=$(eval echo \$${patch_type}_PATCHING_WEEK)
+  local week_of_month=$((($(date +%-d)-1)/7+1))
+
+  if [[ "$patching_week" == "$week_of_month" ]]
+  then
+    echo "Its $patch_type patching week"
+    return 0
+  else 
+    echo "Its not $patch_type patching week"
+    return 1
+  fi
+}
 
 function check_cluster_up() {
+
   local cluster_status
   local abnormal_count
 
@@ -43,6 +61,29 @@ function patch_server(){
   fi
 }
 
-sleep $SLEEP_TIMEOUT
-check_service
-patch_server
+while getopts "pts:" opt; do
+  case ${opt} in
+    p ) patch_type=PROD
+      ;;
+    t ) patch_type=TEST
+      ;;
+    s ) sleep_seconds=$OPTARG
+      ;;
+    \? ) echo "Usage: $0 [-p] [-t] -s <sleep>"
+         exit 0
+      ;;
+  esac
+done
+
+
+if [ -z $patch_type ]
+then
+  patch_type=PROD
+fi
+
+if is_patching_week $patch_type
+then
+  [ ! -z $sleep_seconds ] && sleep $sleep_seconds
+  check_service
+  patch_server
+fi
