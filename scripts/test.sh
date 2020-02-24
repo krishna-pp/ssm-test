@@ -1,25 +1,12 @@
 #!/bin/bash
 
-PROD_PATCHING_WEEK=3
+. ./utils/utils.sh
+
+PROD_PATCHING_WEEK=4
 TEST_PATCHING_WEEK=1
 SERVICE=org.apache.cassandra.service.CassandraDaemon
 CASSANDRA_NODETOOL_COMMAND='/usr/bin/nodetool'
 
-function is_patching_week() {
-
-  local patch_type=$1
-  local patching_week=$(eval echo \$${patch_type}_PATCHING_WEEK)
-  local week_of_month=$((($(date +%-d)-1)/7+1))
-
-  if [[ "$patching_week" == "$week_of_month" ]]
-  then
-    echo "Its $patch_type patching week"
-    return 0
-  else 
-    echo "Its not $patch_type patching week"
-    return 1
-  fi
-}
 
 function check_cluster_up() {
 
@@ -48,25 +35,14 @@ function check_service() {
   fi
 }
 
-function patch_server(){
-  echo "Patching server"
-  yum -y update
-  needs-restarting -r
-  if [ $? -eq 1 ]
-  then 
-    # Exit with status code 194 so SSM can reboot the instance gracefully
-    exit 194
-  else 
-    exit 0
-  fi
-}
-
-while getopts "pts:" opt; do
+while getopts "pth:s:" opt; do
   case ${opt} in
     p ) patch_type=PROD
       ;;
     t ) patch_type=TEST
       ;;
+    h ) nagios_host=$OPTARG
+      ;; 
     s ) sleep_seconds=$OPTARG
       ;;
     \? ) echo "Usage: $0 [-p] [-t] -s <sleep>"
@@ -81,9 +57,15 @@ then
   patch_type=PROD
 fi
 
-if is_patching_week $patch_type
+if [ -z $nagios_host ]
+then 
+  nagios_host=$(hostname)
+fi
+
+if is_patch_week $patch_type
 then
   [ ! -z $sleep_seconds ] && sleep $sleep_seconds
   check_service
+  schedule_nagios_downtime $nagios_host
   patch_server
 fi
